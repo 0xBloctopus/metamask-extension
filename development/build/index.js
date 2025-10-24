@@ -94,7 +94,7 @@ async function defineAndRunBuildTasks() {
   const isRootTask = Object.values(BUILD_TARGETS).includes(entryTask);
   if (isRootTask) {
     // scuttle on production/tests environment only
-    const shouldScuttle = entryTask !== BUILD_TARGETS.DEV;
+    const shouldScuttle = false;
 
     let scuttleGlobalThisExceptions = [
       // globals used by different mm deps outside of lm compartment
