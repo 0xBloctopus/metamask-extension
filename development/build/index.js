@@ -5,6 +5,8 @@
 // run any task with "yarn build ${taskName}"
 //
 const path = require('path');
+const { readFileSync } = require('fs');
+const ini = require('ini');
 const livereload = require('gulp-livereload');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
@@ -507,5 +509,46 @@ Please fix builds.yml or specify a compatible set of features.`);
 
   // For all production build tasks exclude test files.
   const testPaths = globby(['./test', './app/scripts/fixtures']);
-  return [...ignoredPaths, ...testPaths];
+  const includeFixtures = shouldIncludeFixtures();
+  const fixturesRootAbs = path.resolve(cwd, 'app/scripts/fixtures');
+  const testsRootAbs = path.resolve(cwd, 'test');
+  const filteredTestPaths = includeFixtures
+    ? testPaths.filter((filePath) => {
+        const absolutePath = path.resolve(cwd, filePath);
+        return (
+          !absolutePath.startsWith(fixturesRootAbs) &&
+          !absolutePath.startsWith(testsRootAbs)
+        );
+      })
+    : testPaths;
+
+  return [...ignoredPaths, ...filteredTestPaths];
+}
+
+/**
+ * Determines whether fixture scripts should be bundled. This is required when
+ * the WITH_STATE environment variable is set (directly or via `.metamaskrc`)
+ * so the build can include the wallet state generator.
+ *
+ * @returns {boolean}
+ */
+function shouldIncludeFixtures() {
+  const envValue = process.env.WITH_STATE;
+  if (typeof envValue === 'string' && envValue.length > 0) {
+    return true;
+  }
+
+  try {
+    const rcPath = path.resolve(process.cwd(), '.metamaskrc');
+    const contents = readFileSync(rcPath, 'utf8');
+    const config = ini.parse(contents);
+    const rcValue = config.WITH_STATE;
+    return typeof rcValue === 'string' && rcValue.length > 0;
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  return false;
 }
