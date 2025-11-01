@@ -52,6 +52,7 @@ notes.txt
 # MetaMask configuration
 .metamaskrc
 .metamaskprodrc
+.metamaskrc.dist
 
 # Customized manifest configuration
 .manifest-overrides*.json
